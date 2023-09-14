@@ -1,16 +1,11 @@
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-import sqlite3
 import streamlit as st
-import PyPDF2
+from PyPDF2 import PdfReader  # 注意: PdfFileReaderは非推奨
 from langchain.llms import OpenAI
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 from langchain.chains import RetrievalQA
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from PyPDF2 import PdfReader
 
 def generate_response(uploaded_file, openai_api_key, query_text):
     # Load document if file is uploaded
@@ -39,11 +34,10 @@ uploaded_file = st.file_uploader('Upload a PDF file', type=['pdf'])
 def get_pdf_text(uploaded_file):
     if uploaded_file is not None:
         pdf_text = ""
-        pdf_reader = PyPDF2.PdfFileReader(uploaded_file)
+        pdf_reader = PdfReader(uploaded_file)
         
-        for page_num in range(pdf_reader.numPages):
-            page = pdf_reader.getPage(page_num)
-            pdf_text += page.extractText()
+        for page in pdf_reader.pages:
+            pdf_text += page.extract_text()
 
         return pdf_text
     else:

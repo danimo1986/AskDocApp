@@ -1,4 +1,9 @@
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 import streamlit as st
+import sqlite3
 from PyPDF2 import PdfReader
 from langchain.llms import OpenAI
 from langchain.text_splitter import CharacterTextSplitter

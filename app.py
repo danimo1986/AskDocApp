@@ -54,15 +54,9 @@ with st.form('myform', clear_on_submit=True):
     
     if submitted and openai_api_key.startswith('sk-'):
         with st.spinner('Calculating...'):
-            pdf_text = get_pdf_text(uploaded_file)
-            
-            if pdf_text:
-                # You can now pass the 'pdf_text' to your Langchain functions for further processing
-                # For demonstration purposes, we'll just display the extracted text here
-                st.write("Extracted PDF Text:")
-                st.write(pdf_text)
-            else:
-                st.error("Please upload a PDF file.")
+            response = generate_response(uploaded_file, openai_api_key, query_text)
+            result.append(response)
+            del openai_api_key
 
 if len(result):
     st.info(result[0])

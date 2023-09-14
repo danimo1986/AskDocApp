@@ -3,11 +3,14 @@ import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 import sqlite3
 import streamlit as st
+import PyPDF2
 from langchain.llms import OpenAI
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 from langchain.chains import RetrievalQA
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from PyPDF2 import PdfReader
 
 def generate_response(uploaded_file, openai_api_key, query_text):
     # Load document if file is uploaded
@@ -27,24 +30,45 @@ def generate_response(uploaded_file, openai_api_key, query_text):
         return qa.run(query_text)
 
 # Page title
-st.set_page_config(page_title='🦜🔗 Ask the Doc App')
-st.title('🦜🔗 Ask the Doc App')
+st.set_page_config(page_title='🦜🔗 Ask the PDF App')
+st.title('🦜🔗 Ask the PDF App')
 
 # File upload
-uploaded_file = st.file_uploader('Upload an article', type='txt')
+uploaded_file = st.file_uploader('Upload a PDF file', type=['pdf'])
+
+def get_pdf_text(uploaded_file):
+    if uploaded_file is not None:
+        pdf_text = ""
+        pdf_reader = PyPDF2.PdfFileReader(uploaded_file)
+        
+        for page_num in range(pdf_reader.numPages):
+            page = pdf_reader.getPage(page_num)
+            pdf_text += page.extractText()
+
+        return pdf_text
+    else:
+        return None
+
 # Query text
-query_text = st.text_input('Enter your question:', placeholder = 'Please provide a short summary.', disabled=not uploaded_file)
+query_text = st.text_input('Enter your question:', placeholder='Please provide a short summary.')
 
 # Form input and query
 result = []
 with st.form('myform', clear_on_submit=True):
-    openai_api_key = st.text_input('OpenAI API Key', type='password', disabled=not (uploaded_file and query_text))
-    submitted = st.form_submit_button('Submit', disabled=not(uploaded_file and query_text))
+    openai_api_key = st.text_input('OpenAI API Key', type='password', key='openai_key')
+    submitted = st.form_submit_button('Submit', disabled=not (uploaded_file and query_text))
+    
     if submitted and openai_api_key.startswith('sk-'):
         with st.spinner('Calculating...'):
-            response = generate_response(uploaded_file, openai_api_key, query_text)
-            result.append(response)
-            del openai_api_key
+            pdf_text = get_pdf_text(uploaded_file)
+            
+            if pdf_text:
+                # You can now pass the 'pdf_text' to your Langchain functions for further processing
+                # For demonstration purposes, we'll just display the extracted text here
+                st.write("Extracted PDF Text:")
+                st.write(pdf_text)
+            else:
+                st.error("Please upload a PDF file.")
 
 if len(result):
-    st.info(response)
+    st.info(result[0])
